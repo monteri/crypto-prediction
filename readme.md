@@ -1,0 +1,1 @@
+# CryptoPrediction project
