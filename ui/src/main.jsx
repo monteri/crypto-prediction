@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import ReactDOM from "react-dom/client";
 import './index.css'
 import App from './App.jsx'
@@ -10,7 +9,7 @@ ReactDOM.createRoot(root).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />} />
-      <Route path="/about" element={<h2>hui</h2>} />
+      <Route path="/about" element={<h2>Rofl</h2>} />
     </Routes>
   </BrowserRouter>
 );
