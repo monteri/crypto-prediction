@@ -40,3 +40,13 @@
 .read-the-docs {
   color: #888;
 }
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  margin-right: 10px;
+  font-weight: bold;
+}
+.nav-link:hover {
+  text-decoration: underline;
+}
