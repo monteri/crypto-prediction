@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom";
-import "./App.css";
+import CryptoTable from "./components/CryptoTable.jsx";
 import Balance from './Balance.jsx';
+
+import "./App.scss";
+
 
 function App() {
   return (
     <div style={{ backgroundColor: "#222", height: "100vh", padding: "20px" }}>
       <Balance />
+
+      <CryptoTable />
+
       <h2 style={{ color: "white" }}>Crypto Prediction</h2>
         <nav>
         <Link to="/" className="nav-link">Home</Link>{" | "}

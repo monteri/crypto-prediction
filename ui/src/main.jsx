@@ -1,8 +1,9 @@
 import ReactDOM from "react-dom/client";
-import "./index.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import Coin from "./Coin.jsx";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import "./index.scss";
 
 const root = document.getElementById("root");
 
