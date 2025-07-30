@@ -1,0 +1,33 @@
+services:
+  web:
+    build: api/
+    container_name: fastapi_app
+    ports:
+      - "${FASTAPI_PORT}:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: uvicorn main:app --host ${FASTAPI_HOST} --port 8000 --reload
+
+  crypto-producer:
+    build: api/
+    container_name: kafka_producer
+    command: python start_producer.py
+    environment:
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    env_file:
+      - .env
+    # depends_on:
+    #   - kafka1
+
+  crypto-consumer:
+    build: api/
+    container_name: kafka_consumer
+    command: python start_consumer.py
+    environment:
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    env_file:
+      - .env
+    # depends_on:
+    #   - kafka1
