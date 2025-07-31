@@ -1,0 +1,6 @@
+.idea
+ui/node_modules
+api/.env
+.venv
+.env
+.cursorignore
