@@ -50,3 +50,35 @@
 .nav-link:hover {
   text-decoration: underline;
 }
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+  color: white;
+}
+
+.table-wrapper {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.green {
+  color: #00e676;
+  font-weight: bold;
+}
+
+.red {
+  color: #ff1744;
+  font-weight: bold;
+}
+
+.yellow {
+  color: #ffea00;
+  font-weight: bold;
+}

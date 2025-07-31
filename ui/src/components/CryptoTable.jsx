@@ -8,22 +8,49 @@ import {
   TableCell,
   Button,
 } from '@carbon/react';
-import { Edit, TrashCan } from '@carbon/icons-react';
+import { View } from '@carbon/icons-react';
+import { useNavigate } from 'react-router-dom';
+import './CryptoTable.scss';
 
 function CryptoTable() {
+  const navigate = useNavigate();
+
   const rows = [
-    { id: 'a', name: 'Load balancer 1', status: 'Disabled' },
-    { id: 'b', name: 'Load balancer 2', status: 'Starting' },
-    { id: 'c', name: 'Load balancer 3', status: 'Active' },
-  ];
-  const headers = [
-    { key: 'name',   header: 'Name'   },
-    { key: 'status', header: 'Status' },
-    { key: 'actions', header: 'Actions' },
+    {
+      id: 'bitcoin',
+      name: 'BTC',
+      currentValue: '124440.94$',
+      dailyChange: '+2.4%',
+    },
+    {
+      id: 'ethereum',
+      name: 'ETH',
+      currentValue: '8324.15$',
+      dailyChange: '-1.2%',
+    },
+    {
+      id: 'solana',
+      name: 'SOL',
+      currentValue: '195.00$',
+      dailyChange: '0.0%',
+    },
   ];
 
-  const handleEdit = id => { /* ... */ };
-  const handleDelete = id => { /* ... */ };
+  const headers = [
+    { key: 'name', header: 'Name' },
+    { key: 'currentValue', header: 'Current Value' },
+    { key: 'dailyChange', header: 'Daily Change' },
+  ];
+
+  const handleView = (id) => {
+    navigate(`/coin/${id}`);
+  };
+
+  const getChangeColorClass = (change) => {
+    if (change.startsWith('+')) return 'td.green';
+    if (change.startsWith('-')) return 'td.red';
+    return 'td.yellow';
+  };
 
   return (
     <DataTable rows={rows} headers={headers}>
@@ -31,8 +58,8 @@ function CryptoTable() {
         <Table {...getTableProps()}>
           <TableHead>
             <TableRow>
-              {headers.map(header => (
-                <TableHeader {...getHeaderProps({ header })}>
+              {headers.map((header) => (
+                <TableHeader key={header.key} {...getHeaderProps({ header })}>
                   {header.header}
                 </TableHeader>
               ))}
@@ -40,26 +67,27 @@ function CryptoTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map(row => (
-              <TableRow {...getRowProps({ row })}>
-                {row.cells.map(cell => (
-                  <TableCell key={cell.id}>{cell.value}</TableCell>
+            {rows.map((row) => (
+              <TableRow key={row.id} {...getRowProps({ row })}>
+                {row.cells.map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={
+                      cell.info.header === 'dailyChange'
+                        ? getChangeColorClass(cell.value)
+                        : undefined
+                    }
+                  >
+                    {cell.value}
+                  </TableCell>
                 ))}
                 <TableCell>
-                  {/* Inline buttons */}
                   <Button
-                    renderIcon={Edit}
+                    renderIcon={View}
                     kind="ghost"
                     size="sm"
-                    iconDescription="Edit"
-                    onClick={() => handleEdit(row.id)}
-                  />
-                  <Button
-                    renderIcon={TrashCan}
-                    kind="ghost"
-                    size="sm"
-                    iconDescription="Delete"
-                    onClick={() => handleDelete(row.id)}
+                    iconDescription="View Coin"
+                    onClick={() => handleView(row.id)}
                   />
                 </TableCell>
               </TableRow>
