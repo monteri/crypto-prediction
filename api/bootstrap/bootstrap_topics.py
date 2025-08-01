@@ -6,7 +6,7 @@ from kafka.admin import KafkaAdminClient, NewTopic
 load_dotenv()
 
 bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
-config_file = os.getenv('KAFKA_TOPIC_CONFIG_FILE')
+config_file = os.getenv('KAFKA_TOPIC_CONFIG_FILE', 'topics.yaml')
 default_parts = int(os.getenv('KAFKA_DEFAULT_PARTITIONS', 1))
 default_repl = int(os.getenv('KAFKA_DEFAULT_REPLICATION', 1))
 
