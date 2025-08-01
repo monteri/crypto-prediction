@@ -6,8 +6,12 @@ This script ensures all required infrastructure is set up before the application
 import os
 import sys
 import time
-from bootstrap_topics import main as bootstrap_topics
-from bootstrap_ksql import main as bootstrap_ksql
+
+# Add parent directory to path to import from api root
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from bootstrap.bootstrap_topics import main as bootstrap_topics
+from bootstrap.bootstrap_ksql import main as bootstrap_ksql
 
 def main():
     print("🌟 Starting complete Kafka and ksqlDB bootstrap...")

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-KSQLDB_URL = os.getenv('KSQLDB_URL', 'http://ksqldb-server:8088')
+KSQLDB_URL = os.getenv('KSQL_URL', 'http://ksqldb-server:8088')
 CRYPTO_TOPIC = os.getenv('KAFKA_CRYPTO_TOPIC', 'crypto_prices')
 
 def execute_ksql(statement, stream_properties=None):

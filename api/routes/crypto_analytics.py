@@ -10,7 +10,7 @@ load_dotenv()
 
 router = APIRouter(prefix="/crypto/analytics", tags=["crypto-analytics"])
 
-KSQLDB_URL = os.getenv('KSQLDB_URL', 'http://ksqldb-server:8088')
+KSQLDB_URL = os.getenv('KSQL_URL', 'http://ksqldb-server:8088')
 
 class CryptoStats(BaseModel):
     symbol: str

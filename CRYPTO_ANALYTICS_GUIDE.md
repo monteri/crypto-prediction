@@ -27,6 +27,23 @@ Binance WebSocket → Kafka Topic → ksqlDB Streams/Tables → FastAPI Endpoint
    - `crypto_daily_stats`: Daily aggregations  
    - `crypto_monthly_stats`: Monthly aggregations
 
+## Directory Structure
+
+```
+api/
+├── bootstrap/              # Bootstrap scripts and configuration
+│   ├── bootstrap_complete.py    # Main bootstrap orchestrator
+│   ├── bootstrap_topics.py      # Kafka topics creation
+│   ├── bootstrap_ksql.py        # ksqlDB views creation
+│   ├── start_bootstrap.sh       # Bootstrap shell script
+│   └── topics.yaml              # Topic configuration
+├── routes/                 # API routes
+│   ├── crypto_analytics.py     # Analytics endpoints
+│   └── crypto_coins.py          # Coin data endpoints
+├── producers/              # Kafka producers
+└── consumers/              # Kafka consumers
+```
+
 ## Quick Start
 
 ### 1. Setup Environment
@@ -211,9 +228,10 @@ Key configurations in `.env`:
 # Kafka
 KAFKA_BOOTSTRAP_SERVERS=kafka1:19092
 KAFKA_CRYPTO_TOPIC=crypto_prices
+KAFKA_TOPIC_CONFIG_FILE=bootstrap/topics.yaml
 
 # ksqlDB
-KSQLDB_URL=http://ksqldb-server:8088
+KSQL_URL=http://ksqldb-server:8088
 
 # FastAPI
 FASTAPI_HOST=0.0.0.0
@@ -222,7 +240,7 @@ FASTAPI_PORT=8000
 
 ### Topic Configuration
 
-Edit `api/topics.yaml` to modify topic settings:
+Edit `api/bootstrap/topics.yaml` to modify topic settings:
 
 ```yaml
 topics:
@@ -278,7 +296,7 @@ SELECT * FROM crypto_daily_stats EMIT CHANGES LIMIT 5;
 ## Next Steps
 
 1. **Add More Coins**: Modify `COINS` list in `api/producers/crypto_binance.py`
-2. **Custom Aggregations**: Create new ksqlDB queries in `bootstrap_ksql.py`
+2. **Custom Aggregations**: Create new ksqlDB queries in `api/bootstrap/bootstrap_ksql.py`
 3. **Alerting**: Add endpoints for price change alerts
 4. **UI Dashboard**: Build a frontend to visualize the data
 

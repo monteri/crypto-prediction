@@ -18,8 +18,9 @@ while ! curl -f http://ksqldb-server:8088/info > /dev/null 2>&1; do
 done
 echo "✅ ksqlDB is ready"
 
-# Run the bootstrap
+# Run the bootstrap from the bootstrap directory
 echo "🚀 Running bootstrap..."
+cd bootstrap
 python bootstrap_complete.py
 
 echo "✅ Bootstrap completed!"

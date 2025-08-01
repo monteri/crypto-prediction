@@ -2,7 +2,7 @@ services:
   bootstrap:
     build: api/
     container_name: kafka_bootstrap
-    command: bash start_bootstrap.sh
+    command: bash bootstrap/start_bootstrap.sh
     environment:
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     env_file:

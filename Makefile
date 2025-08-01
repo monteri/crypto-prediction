@@ -1,5 +1,8 @@
 .PHONY: help start-kafka start-app stop clean bootstrap test
 
+# Default target
+all: help
+
 help:
 	@echo "Available commands:"
 	@echo "  start-kafka    - Start Kafka infrastructure (kafka.yaml)"
