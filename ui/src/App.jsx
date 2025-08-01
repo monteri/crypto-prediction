@@ -1,25 +1,31 @@
 import { Link } from "react-router-dom";
+import { memo, useMemo } from "react";
 import CryptoTable from "./components/CryptoTable.jsx";
-import Balance from './Balance.jsx';
 
 import "./App.scss";
 
+const App = memo(function App() {
+  // Memoize the navigation links to prevent re-renders
+  const navigationLinks = useMemo(() => [
+    { to: "/", label: "Home" },
+    { to: "/coin/bitcoin", label: "Bitcoin" },
+    { to: "/coin/ethereum", label: "Ethereum" },
+  ], []);
 
-function App() {
   return (
-    <div className="app-container" style={{ backgroundColor: "#222", height: "100vh", padding: "20px" }}>
-      <Balance />
+    <div className="app-container">
       <h2 style={{ color: "white" }}>Crypto Prediction</h2>
-        <nav>
-        <Link to="/" className="nav-link">Home</Link>{" | "}
-        <Link to="/about" className="nav-link">About</Link>{" | "}
-        <Link to="/coin/bitcoin" className="nav-link">Bitcoin</Link>{" | "}
-        <Link to="/coin/ethereum" className="nav-link">Ethereum</Link>
+      <nav>
+        {navigationLinks.map((link, index) => (
+          <span key={link.to}>
+            <Link to={link.to} className="nav-link">{link.label}</Link>
+            {index < navigationLinks.length - 1 && " | "}
+          </span>
+        ))}
       </nav>
       <CryptoTable />
     </div>
   );
-}
-
+});
 
 export default App;

@@ -5,7 +5,7 @@ function Coin() {
   const { id } = useParams();
 
   return (
-    <div style={{ backgroundColor: "#222", height: "100vh", padding: "20px", color: 'white' }}>
+    <div className="app-container">
       <h2>Coin Page 🪙</h2>
       <p>Selected coin ID: {id}</p>
     </div>

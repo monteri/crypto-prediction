@@ -1,14 +1,41 @@
+/* Carbon DataTable color classes */
+.cds--data-table tbody tr td.green,
 .bx--data-table tbody tr td.green {
   color: #00e676 !important;
   font-weight: bold !important;
 }
 
+.cds--data-table tbody tr td.red,
 .bx--data-table tbody tr td.red {
   color: #ff1744 !important;
   font-weight: bold !important;
 }
 
+.cds--data-table tbody tr td.yellow,
 .bx--data-table tbody tr td.yellow {
   color: #ffea00 !important;
   font-weight: bold !important;
+}
+
+/* Alternative selectors for Carbon v11+ */
+[data-table] tbody tr td.green,
+table tbody tr td.green {
+  color: #00e676 !important;
+  font-weight: bold !important;
+}
+
+[data-table] tbody tr td.red,
+table tbody tr td.red {
+  color: #ff1744 !important;
+  font-weight: bold !important;
+}
+
+[data-table] tbody tr td.yellow,
+table tbody tr td.yellow {
+  color: #ffea00 !important;
+  font-weight: bold !important;
+}
+
+.crypto-table {
+  margin-top: 20px;
 }
