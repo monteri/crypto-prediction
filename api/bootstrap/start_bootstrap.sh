@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo "🌟 Starting Kafka and ksqlDB bootstrap process..."
 
@@ -12,8 +12,15 @@ echo "✅ Kafka is ready"
 
 # Wait for ksqlDB to be ready
 echo "⏳ Waiting for ksqlDB to be ready..."
+retry_count=0
+max_retries=10
 while ! curl -f http://ksqldb-server:8088/info > /dev/null 2>&1; do
-  echo "Waiting for ksqlDB..."
+  retry_count=$((retry_count + 1))
+  if [ $retry_count -ge $max_retries ]; then
+    echo "❌ ksqlDB failed to start after $max_retries attempts"
+    exit 1
+  fi
+  echo "Waiting for ksqlDB... (attempt $retry_count/$max_retries)"
   sleep 2
 done
 echo "✅ ksqlDB is ready"

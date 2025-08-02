@@ -28,6 +28,7 @@ class CryptoConsumer:
                     group_id=self.group_id,
                     auto_offset_reset='earliest',
                     enable_auto_commit=True,
+                    key_deserializer=lambda x: x.decode('utf-8') if x else None,
                     value_deserializer=lambda x: json.loads(x.decode('utf-8')),
                     consumer_timeout_ms=10000
                 )
@@ -60,6 +61,7 @@ class CryptoConsumer:
                 print(f"🔑 Key: {message.key}")
                 print(f"📊 Value: {message.value}")
                 print(f"⏰ Timestamp: {message.timestamp}")
+                print(f"🏷️ Symbol: {message.key if message.key else 'N/A'}")
                 print("-" * 30)
                 
         except KeyboardInterrupt:
@@ -85,4 +87,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main() 
+    main()

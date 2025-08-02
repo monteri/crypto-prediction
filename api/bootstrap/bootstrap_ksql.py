@@ -29,7 +29,13 @@ def execute_ksql(statement, stream_properties=None):
     except requests.exceptions.RequestException as e:
         print(f"❌ Error executing ksqlDB statement: {e}")
         if hasattr(e, 'response') and e.response:
-            print(f"Response: {e.response.text}")
+            print(f"Response status: {e.response.status_code}")
+            print(f"Response text: {e.response.text}")
+            try:
+                error_json = e.response.json()
+                print(f"Error details: {json.dumps(error_json, indent=2)}")
+            except:
+                pass
         return None
 
 def wait_for_ksqldb():
@@ -98,7 +104,7 @@ def create_daily_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_daily_stats AS
     SELECT 
         symbol,
-        FORMAT_DATE(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd') AS date_str,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd') AS date_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
@@ -126,7 +132,7 @@ def create_monthly_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_monthly_stats AS
     SELECT 
         symbol,
-        FORMAT_DATE(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM') AS month_str,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM') AS month_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
@@ -154,7 +160,7 @@ def create_hourly_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_hourly_stats AS
     SELECT 
         symbol,
-        FORMAT_DATE(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd HH') AS hour_str,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd HH:00') AS hour_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
@@ -176,6 +182,22 @@ def create_hourly_aggregates_table():
         print("❌ Failed to create crypto_hourly_stats table")
     return result
 
+def drop_existing_tables():
+    """Drop existing tables to ensure clean recreation"""
+    tables_to_drop = [
+        "crypto_hourly_stats",
+        "crypto_daily_stats", 
+        "crypto_monthly_stats"
+    ]
+    
+    for table in tables_to_drop:
+        statement = f"DROP TABLE IF EXISTS {table} DELETE TOPIC;"
+        result = execute_ksql(statement)
+        if result:
+            print(f"✅ Dropped table {table}")
+        else:
+            print(f"⚠️  Could not drop table {table} (may not exist)")
+
 def main():
     print("🚀 Starting ksqlDB setup for crypto price views...")
     
@@ -183,6 +205,10 @@ def main():
     if not wait_for_ksqldb():
         print("❌ Cannot proceed without ksqlDB")
         return False
+    
+    # Drop existing tables first
+    print("🗑️  Dropping existing tables...")
+    drop_existing_tables()
     
     # Create streams and tables
     success = True

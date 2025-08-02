@@ -15,17 +15,17 @@ help:
 
 start-kafka:
 	@echo "🚀 Starting Kafka infrastructure..."
-	docker-compose -f kafka.yaml up -d
+	docker-compose -f kafka.yaml up
 
 start-app:
 	@echo "🚀 Starting application services..."
-	docker-compose -f compose.yml up -d
+	docker-compose -f compose.yml up --build --watch
 
 start-all: start-kafka
 	@echo "⏳ Waiting for Kafka to be ready..."
 	@sleep 10
 	@echo "🚀 Starting application services..."
-	docker-compose -f compose.yml up -d
+	docker-compose -f compose.yml up
 
 bootstrap:
 	@echo "🔧 Running bootstrap manually..."

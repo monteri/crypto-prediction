@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import router
+from routes.crypto_coins import router as coins_router
 from routes.crypto_analytics import router as analytics_router
 
 app = FastAPI(
@@ -8,7 +8,7 @@ app = FastAPI(
     description="API for crypto price analytics with Kafka and ksqlDB"
 )
 
-app.include_router(router)
+app.include_router(coins_router)
 app.include_router(analytics_router)
 
 
