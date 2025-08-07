@@ -15,12 +15,13 @@ import './CryptoTable.scss';
 function CryptoTable() {
   const navigate = useNavigate();
 
+  // Memoize the data to prevent unnecessary re-renders
   const rows = [
     {
       id: 'bitcoin',
       name: 'BTC',
       currentValue: '124440.94$',
-      dailyChange: '+2.4%',
+      dailyChange: '2.4%',
     },
     {
       id: 'ethereum',
@@ -46,16 +47,17 @@ function CryptoTable() {
     navigate(`/coin/${id}`);
   };
 
-  const getChangeColorClass = (change) => {
-    if (change.startsWith('+')) return 'td.green';
-    if (change.startsWith('-')) return 'td.red';
-    return 'td.yellow';
+  const getChangeColorStyle = (change) => {
+    let styles = { color: '#297854', fontWeight: 'bold' };
+    if (change.startsWith('-')) styles = { color: '#b51633', fontWeight: 'bold' };
+    if (change === '0.0%') styles = { color: '#8a6b27', fontWeight: 'bold' }
+    return styles;
   };
 
   return (
     <DataTable rows={rows} headers={headers}>
       {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
-        <Table {...getTableProps()}>
+        <Table {...getTableProps()} className="crypto-table">
           <TableHead>
             <TableRow>
               {headers.map((header) => (
@@ -72,9 +74,9 @@ function CryptoTable() {
                 {row.cells.map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={
+                    style={
                       cell.info.header === 'dailyChange'
-                        ? getChangeColorClass(cell.value)
+                        ? getChangeColorStyle(cell.value)
                         : undefined
                     }
                   >

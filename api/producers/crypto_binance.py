@@ -84,7 +84,7 @@ def periodic_send_worker():
         try:
             if latest_data:
                 for msg in latest_data.values():
-                    future = producer.send(TOPIC, value=msg)
+                    future = producer.send(TOPIC, key=msg['symbol'].encode('utf-8'), value=msg)
                     record_metadata = future.get(timeout=10)
                     print(f"✅ Sent to Kafka topic '{TOPIC}' partition {record_metadata.partition} offset {record_metadata.offset}: {msg}")
                 producer.flush()

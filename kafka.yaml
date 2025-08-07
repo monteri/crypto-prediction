@@ -138,6 +138,11 @@ services:
       service: conduktor-console
       file: conduktor.yml
 
+networks:
+  default:
+    external: true
+    name: crypto-prediction-network
+
 volumes:
   pg_data: {}
   conduktor_data: {}

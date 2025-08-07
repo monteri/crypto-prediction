@@ -1,4 +1,18 @@
 services:
+  bootstrap:
+    build: api/
+    container_name: kafka_bootstrap
+    command: sh bootstrap/start_bootstrap.sh
+    environment:
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: "no"
+    networks:
+      - default
+
   web:
     build: api/
     container_name: fastapi_app
@@ -9,6 +23,9 @@ services:
     volumes:
       - .:/app
     command: uvicorn main:app --host ${FASTAPI_HOST} --port 8000 --reload
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
 
   crypto-producer:
     build: api/
@@ -18,8 +35,9 @@ services:
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     env_file:
       - .env
-    # depends_on:
-    #   - kafka1
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
 
   crypto-consumer:
     build: api/
@@ -29,5 +47,11 @@ services:
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     env_file:
       - .env
-    # depends_on:
-    #   - kafka1
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
+networks:
+  default:
+    external: true
+    name: crypto-prediction-network
