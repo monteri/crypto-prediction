@@ -23,7 +23,6 @@ const App = memo(function App() {
           </span>
         ))}
       </nav>
-      <Balance />
       <CryptoTable />
     </div>
   );

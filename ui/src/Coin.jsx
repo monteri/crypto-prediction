@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import LineChart from "./components/LineChart";
+
 import bitcoinLogo from "./assets/logo-BTC.png";
 import ethereumLogo from "./assets/logo-ETH.svg";
 
@@ -45,7 +46,6 @@ function Coin() {
     return info[coinId.toLowerCase()] || info.default;
   };
 
-  // 🆕 Новая функция для выбора логотипа
   const getCoinLogo = (coinId) => {
     switch (coinId.toLowerCase()) {
       case "bitcoin":
@@ -53,7 +53,7 @@ function Coin() {
       case "ethereum":
         return ethereumLogo;
       default:
-        return null; // Возвращаем null, если логотипа нет
+        return null;
     }
   };
 
@@ -83,9 +83,84 @@ function Coin() {
   const monthLabels = Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
 
   return (
-    <div className="app-container">
-      <h2>Coin Page 🪙</h2>
-      <p>Selected coin ID: {id}</p>
+    <div style={{ backgroundColor: "#222", minHeight: "100vh", width: "900px", padding: "40px 0", color: "white" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 20px" }}>
+        {/* 🆕 Обновленный заголовок с условным рендерингом логотипа */}
+        <h2 style={{
+          marginBottom: "30px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center", // 🆕 Выравнивание по центру
+          gap: "10px"
+        }}>
+          {id.toUpperCase()}
+          {coinLogo && (
+            <img src={coinLogo} alt={`${id} logo`} style={{ width: "32px", height: "32px" }} />
+          )}
+        </h2>
+
+        <button
+          onClick={() => setIsCardOpen(!isCardOpen)}
+          style={{
+            marginBottom: "20px",
+            padding: "10px 20px",
+            backgroundColor: "#444",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          {isCardOpen ? "Hide the information" : "About crypto-coin"}
+        </button>
+
+        {isCardOpen && (
+          <div style={{
+            backgroundColor: "#333",
+            padding: "20px",
+            borderRadius: "8px",
+            marginBottom: "40px"
+          }}>
+            <p><strong>Market capitalization:</strong> {coinInfo.marketCap}</p>
+            <p><strong>Volume in 24 hours:</strong> {coinInfo.volume24h}</p>
+            <p><strong>General offer:</strong> {coinInfo.totalSupply}</p>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: "40px", marginBottom: "40px", alignItems: "center" }}>
+          <div>
+            <strong>Name:</strong> {id.toUpperCase()}
+          </div>
+          <div>
+            <strong>Current Value:</strong> ${currentValue.toLocaleString()}
+          </div>
+          <div>
+            <strong>Change:</strong>{" "}
+            <span style={{ color: getChangeColor() }}>
+              {changePercent > 0 ? "+" : ""}
+              {changePercent}%
+            </span>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "50px" }}>
+          <h3 style={{ marginBottom: "15px" }}>📅 Monthly Chart (30 Days)</h3>
+          <LineChart
+            labels={monthLabels}
+            data={monthData}
+            title={`${id} - Monthly Price`}
+          />
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: "15px" }}>🕐 Daily Chart (24 Hours)</h3>
+          <LineChart
+            labels={dayLabels}
+            data={dayData}
+            title={`${id} - Daily Price`}
+          />
+        </div>
+      </div>
     </div>
   );
 }
