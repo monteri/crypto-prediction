@@ -5,7 +5,7 @@ function Balance() {
 
   return (
     <div>
-      <h1 style={{ color: "white" }}>My balans: {state}</h1>
+      <h1 style={{ color: "white", padding: "15px" }}>My balans: {state}</h1>
     </div>
   );
 }
