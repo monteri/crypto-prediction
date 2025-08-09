@@ -104,6 +104,57 @@ class CryptoAlertConsumer:
         
         return alerts[:limit]
     
+    def get_alerts_since_timestamp(self, since_timestamp: int, symbol: str = None, limit: int = 100) -> List[Dict]:
+        """Get alerts that occurred after the specified timestamp"""
+        alerts = self.alert_store.copy()
+        
+        # Filter by timestamp first
+        alerts = [alert for alert in alerts if alert.get('alert_time', 0) > since_timestamp]
+        
+        if symbol:
+            alerts = [alert for alert in alerts if alert.get('symbol') == symbol.upper()]
+        
+        # Sort by alert time (most recent first)
+        alerts.sort(key=lambda x: x.get('alert_time', 0), reverse=True)
+        
+        return alerts[:limit]
+    
+    def get_alerts_for_polling(self, since_timestamp: int = None, minutes_back: int = 10) -> Dict:
+        """Get alerts optimized for frontend polling"""
+        current_time = int(time.time() * 1000)  # Current time in milliseconds
+        
+        # If no timestamp provided, look back specified minutes
+        if since_timestamp is None:
+            since_timestamp = current_time - (minutes_back * 60 * 1000)
+        
+        # Get alerts since timestamp
+        new_alerts = self.get_alerts_since_timestamp(since_timestamp)
+        
+        # Group alerts by symbol for easier frontend processing
+        alerts_by_symbol = {}
+        for alert in new_alerts:
+            symbol = alert.get('symbol', 'UNKNOWN')
+            if symbol not in alerts_by_symbol:
+                alerts_by_symbol[symbol] = []
+            alerts_by_symbol[symbol].append(alert)
+        
+        # Get counts by alert type
+        alert_type_counts = {}
+        for alert in new_alerts:
+            alert_type = alert.get('alert_type', 'UNKNOWN')
+            alert_type_counts[alert_type] = alert_type_counts.get(alert_type, 0) + 1
+        
+        return {
+            'polling_timestamp': current_time,
+            'since_timestamp': since_timestamp,
+            'new_alerts_count': len(new_alerts),
+            'new_alerts': new_alerts,
+            'alerts_by_symbol': alerts_by_symbol,
+            'alert_type_counts': alert_type_counts,
+            'symbols_with_alerts': list(alerts_by_symbol.keys()),
+            'has_new_alerts': len(new_alerts) > 0
+        }
+    
     def get_alert_summary(self) -> Dict:
         """Get summary statistics of alerts"""
         if not self.alert_store:

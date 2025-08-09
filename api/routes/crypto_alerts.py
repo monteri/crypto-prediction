@@ -24,6 +24,37 @@ def ensure_consumer_running():
         consumer_thread.start()
         time.sleep(2)  # Give it a moment to initialize
 
+@router.get("/alerts/poll", summary="Poll for New Crypto Alerts (Frontend Optimized)")
+async def poll_alerts(
+    since: Optional[int] = Query(None, description="Timestamp in milliseconds - get alerts since this time"),
+    minutes_back: int = Query(10, ge=1, le=60, description="Minutes to look back if no 'since' timestamp provided")
+) -> Dict:
+    """
+    Poll for new crypto alerts - optimized for frontend polling every 30 seconds
+    
+    - **since**: Timestamp in milliseconds to get alerts after this time
+    - **minutes_back**: How many minutes to look back if no 'since' timestamp (default 10)
+    
+    Returns alerts grouped by symbol with metadata for easy frontend consumption
+    """
+    try:
+        ensure_consumer_running()
+        polling_data = alert_consumer.get_alerts_for_polling(
+            since_timestamp=since, 
+            minutes_back=minutes_back
+        )
+        
+        return {
+            "success": True,
+            "data": polling_data,
+            "polling_info": {
+                "recommended_poll_interval": "30 seconds",
+                "next_poll_timestamp": polling_data["polling_timestamp"]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error polling alerts: {str(e)}")
+
 @router.get("/alerts", summary="Get Recent Crypto Alerts")
 async def get_alerts(
     symbol: Optional[str] = Query(None, description="Filter by crypto symbol (e.g., BTCUSDT)"),
@@ -50,6 +81,44 @@ async def get_alerts(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving alerts: {str(e)}")
+
+@router.get("/alerts/since/{timestamp}", summary="Get Alerts Since Timestamp")
+async def get_alerts_since_timestamp(
+    timestamp: int,
+    symbol: Optional[str] = Query(None, description="Filter by crypto symbol"),
+    limit: int = Query(100, ge=1, le=500, description="Number of alerts to return")
+) -> Dict:
+    """
+    Get alerts that occurred after the specified timestamp
+    
+    - **timestamp**: Unix timestamp in milliseconds
+    - **symbol**: Optional filter by crypto symbol
+    - **limit**: Maximum number of alerts to return
+    """
+    try:
+        ensure_consumer_running()
+        alerts = alert_consumer.get_alerts_since_timestamp(
+            since_timestamp=timestamp,
+            symbol=symbol,
+            limit=limit
+        )
+        
+        return {
+            "success": True,
+            "data": alerts,
+            "count": len(alerts),
+            "filters": {
+                "since_timestamp": timestamp,
+                "symbol": symbol,
+                "limit": limit
+            },
+            "metadata": {
+                "current_timestamp": int(time.time() * 1000),
+                "has_new_alerts": len(alerts) > 0
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving alerts since timestamp: {str(e)}")
 
 @router.get("/alerts/summary", summary="Get Alert Summary Statistics")
 async def get_alert_summary() -> Dict:

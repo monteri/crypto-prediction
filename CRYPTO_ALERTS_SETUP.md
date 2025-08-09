@@ -22,6 +22,8 @@ The alerting system uses KSQL hopping windows to detect significant price change
    - Provides real-time alert processing
 
 3. **API Endpoints** (`crypto_alerts.py`)
+   - `/alerts/poll` - **Frontend polling endpoint (recommended)**
+   - `/alerts/since/{timestamp}` - Get alerts since timestamp
    - `/alerts` - Get recent alerts
    - `/alerts/summary` - Get alert statistics
    - `/alerts/{symbol}` - Get alerts for specific symbol
@@ -95,6 +97,20 @@ python api/start_alert_consumer.py
 
 ### 3. API Usage
 
+#### Frontend Polling (Recommended)
+```bash
+# First poll - get alerts from last 10 minutes
+curl "http://localhost:8000/alerts/poll?minutes_back=10"
+
+# Subsequent polls - use timestamp from previous response
+curl "http://localhost:8000/alerts/poll?since=1640995200000"
+```
+
+#### Get Alerts Since Timestamp
+```bash
+curl "http://localhost:8000/alerts/since/1640995200000"
+```
+
 #### Get Recent Alerts
 ```bash
 curl "http://localhost:8000/alerts?limit=10"
@@ -114,6 +130,72 @@ curl "http://localhost:8000/alerts/summary"
 ```bash
 curl "http://localhost:8000/alerts/health"
 ```
+
+### Frontend Integration
+
+For frontend applications, use the provided JavaScript polling class:
+
+```javascript
+// Initialize the poller
+const alertPoller = new CryptoAlertPoller('http://localhost:8000');
+
+// Set up alert handling
+alertPoller.onNewAlerts((alertData) => {
+    console.log(`Received ${alertData.new_alerts_count} new alerts`);
+    // Update your UI here
+});
+
+// Start polling every 30 seconds
+alertPoller.startPolling();
+```
+
+See `frontend-polling-example.js` for a complete implementation example.
+
+### Polling Response Structure
+
+The `/alerts/poll` endpoint returns optimized data for frontend consumption:
+
+```json
+{
+  "success": true,
+  "data": {
+    "polling_timestamp": 1640995800000,
+    "since_timestamp": 1640995200000,
+    "new_alerts_count": 2,
+    "has_new_alerts": true,
+    "new_alerts": [
+      {
+        "symbol": "BTCUSDT",
+        "start_price": 45000.0,
+        "end_price": 47250.0,
+        "price_change_percent": 5.0,
+        "alert_type": "INCREASE",
+        "alert_time": 1640995500000,
+        "alert_id": "BTCUSDT_1640995500000"
+      }
+    ],
+    "alerts_by_symbol": {
+      "BTCUSDT": [/* alerts for BTC */],
+      "ETHUSDT": [/* alerts for ETH */]
+    },
+    "alert_type_counts": {
+      "INCREASE": 1,
+      "DECREASE": 1
+    },
+    "symbols_with_alerts": ["BTCUSDT", "ETHUSDT"]
+  },
+  "polling_info": {
+    "recommended_poll_interval": "30 seconds",
+    "next_poll_timestamp": 1640995800000
+  }
+}
+```
+
+**Key fields for frontend:**
+- `has_new_alerts`: Quick boolean check
+- `new_alerts_count`: Number for badges/counters
+- `polling_timestamp`: Use for next poll request
+- `alerts_by_symbol`: Pre-grouped data for UI components
 
 ## Monitoring
 
