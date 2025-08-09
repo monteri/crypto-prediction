@@ -73,7 +73,6 @@ def on_close(ws, code, reason):
 
 def on_open(ws):
     print("🔌 WebSocket connection opened")
-    # Start periodic sending in a separate thread
     threading.Thread(target=periodic_send_worker, daemon=True).start()
 
 
@@ -88,10 +87,10 @@ def periodic_send_worker():
                     record_metadata = future.get(timeout=10)
                     print(f"✅ Sent to Kafka topic '{TOPIC}' partition {record_metadata.partition} offset {record_metadata.offset}: {msg}")
                 producer.flush()
-            time.sleep(5)  # Send every 5 seconds
+            time.sleep(5)
         except Exception as e:
             print(f"❌ Error sending message to Kafka: {e}")
-            time.sleep(5)  # Wait before retrying
+            time.sleep(5)
 
 
 if __name__ == '__main__':
