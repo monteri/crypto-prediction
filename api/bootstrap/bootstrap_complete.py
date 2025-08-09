@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from bootstrap.bootstrap_topics import main as bootstrap_topics
 from bootstrap.bootstrap_ksql import main as bootstrap_ksql
+from bootstrap.bootstrap_alerts import main as bootstrap_alerts
 
 def main():
     print("🌟 Starting complete Kafka and ksqlDB bootstrap...")
@@ -42,12 +43,29 @@ def main():
         print(f"❌ Failed to bootstrap ksqlDB views: {e}")
         return False
     
+    # Wait a moment for streams to be fully created
+    print("⏳ Waiting for streams to be initialized...")
+    time.sleep(3)
+    
+    # Step 3: Bootstrap alert streams
+    print("\n🚨 Step 3: Creating crypto alert streams...")
+    try:
+        if bootstrap_alerts():
+            print("✅ Alert streams bootstrap completed")
+        else:
+            print("❌ Alert streams bootstrap failed")
+            return False
+    except Exception as e:
+        print(f"❌ Failed to bootstrap alert streams: {e}")
+        return False
+    
     print("\n🎉 Complete bootstrap finished successfully!")
     print("=" * 60)
     print("🚀 Your Kafka ecosystem is ready with:")
     print("   • Kafka topics")
     print("   • ksqlDB streams and tables")
     print("   • Daily and monthly crypto price aggregations")
+    print("   • Real-time crypto price alerts with deduplication")
     
     return True
 

@@ -51,6 +51,18 @@ services:
       bootstrap:
         condition: service_completed_successfully
 
+  alert-consumer:
+    build: api/
+    container_name: kafka_alert_consumer
+    command: python start_alert_consumer.py
+    environment:
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    env_file:
+      - .env
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
 networks:
   default:
     external: true
