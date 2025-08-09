@@ -74,7 +74,7 @@ def create_price_changes_stream():
     FROM crypto_enriched 
     WINDOW HOPPING (SIZE 10 MINUTES, ADVANCE BY 30 SECONDS)
     GROUP BY symbol
-    HAVING COUNT(*) > 1  -- Ensure we have at least 2 data points
+    HAVING COUNT(*) > 1
     EMIT CHANGES;
     """
     
@@ -156,7 +156,7 @@ def create_deduplicated_alerts_stream():
     LEFT JOIN crypto_alert_dedup_store d 
     ON a.symbol = d.symbol
     WHERE d.symbol IS NULL 
-       OR (a.alert_time - d.last_alert_time) > 120000  -- 2 minutes in milliseconds
+       OR (a.alert_time - d.last_alert_time) > 120000
     EMIT CHANGES;
     """
     
@@ -184,7 +184,7 @@ def drop_existing_alert_streams():
         else:
             print(f"⚠️  Could not drop stream {stream} (may not exist)")
             
-        # Also try dropping as table
+
         statement = f"DROP TABLE IF EXISTS {stream} DELETE TOPIC;"
         result = execute_ksql(statement)
         if result:
@@ -198,14 +198,11 @@ def main():
         print("❌ Cannot proceed without ksqlDB")
         return False
     
-    # Drop existing alert streams first
     print("🗑️  Dropping existing alert streams...")
     drop_existing_alert_streams()
     
-    # Give some time for cleanup
     time.sleep(3)
     
-    # Create alert streams and tables
     success = True
     success &= create_price_changes_stream() is not None
     success &= create_significant_alerts_stream() is not None
