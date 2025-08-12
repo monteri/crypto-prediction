@@ -19,7 +19,7 @@ def main():
     print("=" * 60)
     
     # Step 1: Bootstrap Kafka topics
-    print("\n📋 Step 1: Creating Kafka topics...")
+    print("\nStep 1: Creating Kafka topics...")
     try:
         bootstrap_topics()
         print("✅ Kafka topics bootstrap completed")
@@ -32,7 +32,7 @@ def main():
     time.sleep(5)
     
     # Step 2: Bootstrap ksqlDB views
-    print("\n📊 Step 2: Creating ksqlDB views...")
+    print("\nStep 2: Creating ksqlDB views...")
     try:
         if bootstrap_ksql():
             print("✅ ksqlDB views bootstrap completed")
@@ -42,13 +42,12 @@ def main():
     except Exception as e:
         print(f"❌ Failed to bootstrap ksqlDB views: {e}")
         return False
-    
-    # Wait a moment for streams to be fully created
+
     print("⏳ Waiting for streams to be initialized...")
     time.sleep(3)
     
     # Step 3: Bootstrap alert streams
-    print("\n🚨 Step 3: Creating crypto alert streams...")
+    print("\nStep 3: Creating crypto alert streams...")
     try:
         if bootstrap_alerts():
             print("✅ Alert streams bootstrap completed")

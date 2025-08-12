@@ -2,24 +2,24 @@ topics:
   - name: crypto_prices
     partitions: 3
     replication: 1
-  - name: _crypto_enriched
+  - name: crypto_enriched
     partitions: 3
     replication: 1
-  - name: _crypto_daily_stats
+  - name: crypto_daily_stats
     partitions: 3
     replication: 1
-  - name: _crypto_monthly_stats
+  - name: crypto_monthly_stats
     partitions: 3
     replication: 1
-  - name: _crypto_hourly_stats
+  - name: crypto_hourly_stats
     partitions: 3
     replication: 1
   - name: crypto_alerts
     partitions: 3
     replication: 1
-  - name: _crypto_price_changes
+  - name: crypto_price_changes
     partitions: 3
     replication: 1
-  - name: _crypto_alert_dedup_store
+  - name: crypto_alert_dedup_store
     partitions: 3
     replication: 1
