@@ -119,7 +119,7 @@ def create_price_changes_table():
         COUNT(*) AS data_points,
         LATEST_BY_OFFSET(event_time) AS latest_timestamp
     FROM crypto_enriched 
-    WINDOW HOPPING (SIZE 10 MINUTES, ADVANCE BY 30 SECONDS)
+    WINDOW HOPPING (SIZE 10 MINUTES, ADVANCE BY 60 SECONDS)
     GROUP BY symbol
     EMIT CHANGES;
     """

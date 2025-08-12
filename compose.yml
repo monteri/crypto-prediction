@@ -22,7 +22,8 @@ services:
       - .env
     volumes:
       - .:/app
-    command: uvicorn main:app --host ${FASTAPI_HOST} --port 8000 --reload
+    working_dir: /app/api
+    command: uvicorn main:app --host ${FASTAPI_HOST} --port 8000 --reload --reload-dir /app/api --reload-dir /app/api/routes
     depends_on:
       bootstrap:
         condition: service_completed_successfully

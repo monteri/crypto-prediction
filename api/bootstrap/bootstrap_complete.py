@@ -17,8 +17,7 @@ from bootstrap.bootstrap_alerts import main as bootstrap_alerts
 def main():
     print("🌟 Starting complete Kafka and ksqlDB bootstrap...")
     print("=" * 60)
-    
-    # Step 1: Bootstrap Kafka topics
+
     print("\nStep 1: Creating Kafka topics...")
     try:
         bootstrap_topics()
@@ -26,8 +25,7 @@ def main():
     except Exception as e:
         print(f"❌ Failed to bootstrap Kafka topics: {e}")
         return False
-    
-    # Wait a moment for topics to be fully created
+
     print("⏳ Waiting for topics to be fully initialized...")
     time.sleep(5)
     

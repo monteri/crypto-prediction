@@ -140,7 +140,7 @@ def create_monthly_aggregates_table():
         LATEST_BY_OFFSET(price_numeric) AS latest_price,
         EARLIEST_BY_OFFSET(price_numeric) AS opening_price
     FROM crypto_enriched 
-    WINDOW TUMBLING (SIZE 1 MONTH)
+    WINDOW TUMBLING (SIZE 30 DAYS)
     GROUP BY symbol
     EMIT CHANGES;
     """

@@ -72,20 +72,41 @@ def query_ksqldb_pull(sql_query: str):
     Use for fetching current state without streaming.
     """
     url = f"{KSQLDB_URL}/query"
-    payload = {"sql": sql_query, "properties": {"auto.offset.reset": "earliest"}}
+    payload = {"ksql": sql_query, "properties": {"auto.offset.reset": "earliest"}}
     headers = {"Content-Type": "application/vnd.ksql.v1+json; charset=utf-8"}
+
+
 
     try:
         r = requests.post(url, json=payload, headers=headers, timeout=30)
         r.raise_for_status()
-        data = r.json()
         
-        if "data" in data and "data" in data["data"]:
-            return data["data"]["data"]
-        return []
+        # ksqlDB query endpoint returns a stream of JSON objects
+        # First line is metadata, subsequent lines are data rows
+        lines = r.text.strip().split('\n')
+        if not lines:
+            return []
+        
+        # Parse the first line to get metadata
+        try:
+            metadata = json.loads(lines[0])
+        except json.JSONDecodeError:
+            return []
+        
+        # Parse data rows (skip the first line which is metadata)
+        data_rows = []
+        for line in lines[1:]:
+            if line.strip():
+                try:
+                    row = json.loads(line)
+                    data_rows.append(row)
+                except json.JSONDecodeError:
+                    continue
+        
+        return data_rows
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Error querying ksqlDB: {e}")
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing ksqlDB response: {e}")
 
 
@@ -106,22 +127,15 @@ async def get_daily_stats(
     symbol_upper = normalize_symbol(symbol)
     limit = min(max(limit or 30, 1), 200)
     
-    sql_query = f"""
-    SELECT symbol, window_start, window_end, num_updates, 
-           min_price, max_price, avg_price, latest_price, opening_price
-    FROM crypto_daily_stats 
-    WHERE symbol = '{symbol_upper}'
-    ORDER BY window_start DESC
-    LIMIT {limit};
-    """
+    sql_query = f"SELECT symbol, window_start, window_end, num_updates, min_price, max_price, avg_price, latest_price, opening_price FROM crypto_daily_stats WHERE symbol = '{symbol_upper}';"
 
     try:
         results = query_ksqldb_pull(sql_query)
         if not results:
             raise HTTPException(status_code=404, detail=f"Daily stats for '{symbol}' not found")
         
-        # Data is already sorted by window_start DESC from the query
-        sorted_results = results
+        # Sort by window_start DESC and limit results
+        sorted_results = sorted(results, key=lambda x: x[1], reverse=True)[:limit]
         
         time_series = []
         for row in sorted_results:
@@ -170,22 +184,15 @@ async def get_monthly_stats(
     symbol_upper = normalize_symbol(symbol)
     limit = min(max(limit or 12, 1), 200)
     
-    sql_query = f"""
-    SELECT symbol, window_start, window_end, num_updates, 
-           min_price, max_price, avg_price, latest_price, opening_price
-    FROM crypto_monthly_stats 
-    WHERE symbol = '{symbol_upper}'
-    ORDER BY window_start DESC
-    LIMIT {limit};
-    """
+    sql_query = f"SELECT symbol, window_start, window_end, num_updates, min_price, max_price, avg_price, latest_price, opening_price FROM crypto_monthly_stats WHERE symbol = '{symbol_upper}';"
 
     try:
         results = query_ksqldb_pull(sql_query)
         if not results:
             raise HTTPException(status_code=404, detail=f"Monthly stats for '{symbol}' not found")
         
-        # Data is already sorted by window_start DESC from the query
-        sorted_results = results
+        # Sort by window_start DESC and limit results
+        sorted_results = sorted(results, key=lambda x: x[1], reverse=True)[:limit]
         
         time_series = []
         for row in sorted_results:
@@ -234,22 +241,15 @@ async def get_hourly_stats(
     symbol_upper = normalize_symbol(symbol)
     limit = min(max(limit or 24, 1), 200)
     
-    sql_query = f"""
-    SELECT symbol, window_start, window_end, num_updates, 
-           min_price, max_price, avg_price, latest_price, opening_price
-    FROM crypto_hourly_stats 
-    WHERE symbol = '{symbol_upper}'
-    ORDER BY window_start DESC
-    LIMIT {limit};
-    """
+    sql_query = f"SELECT symbol, window_start, window_end, num_updates, min_price, max_price, avg_price, latest_price, opening_price FROM crypto_hourly_stats WHERE symbol = '{symbol_upper}';"
 
     try:
         results = query_ksqldb_pull(sql_query)
         if not results:
             raise HTTPException(status_code=404, detail=f"Hourly stats for '{symbol}' not found")
         
-        # Data is already sorted by window_start DESC from the query
-        sorted_results = results
+        # Sort by window_start DESC and limit results
+        sorted_results = sorted(results, key=lambda x: x[1], reverse=True)[:limit]
         
         time_series = []
         for row in sorted_results:
@@ -328,13 +328,7 @@ async def get_single_symbol_summary(symbol: str):
     """Get latest stats summary for a specific symbol with daily change percent"""
     symbol_upper = normalize_symbol(symbol)
     
-    sql_query = f"""
-    SELECT symbol, window_start, latest_price, avg_price, min_price, max_price, opening_price, num_updates
-    FROM crypto_daily_stats 
-    WHERE symbol = '{symbol_upper}'
-    ORDER BY window_start DESC
-    LIMIT 1;
-    """
+    sql_query = f"SELECT symbol, window_start, latest_price, avg_price, min_price, max_price, opening_price, num_updates FROM crypto_daily_stats WHERE symbol = '{symbol_upper}';"
 
     try:
         results = query_ksqldb_pull(sql_query)
@@ -342,8 +336,9 @@ async def get_single_symbol_summary(symbol: str):
         if not results:
             raise HTTPException(status_code=404, detail=f"Symbol '{symbol}' not found")
         
-        # Get the first (and only) row since we limited to 1
-        row = results[0]
+        # Sort by window_start DESC and get the first (most recent) row
+        sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
+        row = sorted_results[0]
         opening_price = row[6] if row[6] and row[6] > 0 else row[2]
         latest_price = row[2]
         daily_change_percent = ((latest_price - opening_price) / opening_price * 100) if opening_price > 0 else 0

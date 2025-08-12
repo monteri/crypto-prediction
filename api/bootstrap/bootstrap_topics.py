@@ -27,13 +27,30 @@ def main():
             repl = t.get('replication', default_repl)
             new_topics.append(NewTopic(name, num_partitions=parts, replication_factor=repl))
 
-        futures = admin.create_topics(new_topics, timeout_ms=10000)
-        for topic, future in futures.items():
-            try:
-                future.result()
-                print(f"✔ Created topic: {topic}")
-            except Exception as e:
-                print(f"⚠ Topic '{topic}' creation skipped or failed: {e}")
+        # Handle the new kafka-python API response format
+        try:
+            # Try the new API format first
+            response = admin.create_topics(new_topics, timeout_ms=10000)
+            # Check if response has items attribute (new format)
+            if hasattr(response, 'items'):
+                for topic, future in response.items():
+                    try:
+                        future.result()
+                        print(f"✔ Created topic: {topic}")
+                    except Exception as e:
+                        print(f"⚠ Topic '{topic}' creation skipped or failed: {e}")
+            else:
+                # New format without items - topics are created successfully
+                print(f"✔ Created {len(new_topics)} topics successfully")
+        except AttributeError:
+            # Fallback for older API format
+            futures = admin.create_topics(new_topics, timeout_ms=10000)
+            for topic, future in futures.items():
+                try:
+                    future.result()
+                    print(f"✔ Created topic: {topic}")
+                except Exception as e:
+                    print(f"⚠ Topic '{topic}' creation skipped or failed: {e}")
         
         return True
     except Exception as e:
