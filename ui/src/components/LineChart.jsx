@@ -1,3 +1,4 @@
+import React from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -12,35 +13,34 @@ import {
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 function LineChart({ labels, data, title }) {
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        label: title,
-        data,
-        borderColor: "#4bc0c0",
-        backgroundColor: "rgba(75,192,192,0.2)",
-        tension: 0.4,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { display: true },
-    },
-    scales: {
-      y: {
-        ticks: { color: "#fff" },
-      },
-      x: {
-        ticks: { color: "#fff" },
-      },
-    },
-  };
-
-  return <Line data={chartData} options={options} />;
+  return (
+    <div style={{ backgroundColor: "#333", padding: "20px", borderRadius: "8px" }}>
+      <Line
+        data={{
+          labels,
+          datasets: [
+            {
+              label: title,
+              data,
+              fill: false,
+              borderColor: "rgba(75,192,192,1)",
+              tension: 0.1,
+            },
+          ],
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "white" } },
+          },
+          scales: {
+            x: { ticks: { color: "white" } },
+            y: { ticks: { color: "white" } },
+          },
+        }}
+      />
+    </div>
+  );
 }
 
 export default LineChart;

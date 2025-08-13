@@ -7,90 +7,99 @@ import ethereumLogo from "./assets/logo-ETH.svg";
 
 function Coin() {
   const { id } = useParams();
-
   const [isCardOpen, setIsCardOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState("1d"); // "15m", "1d", "1w", "1m"
 
-  const generatePrice = (min, max) => {
-    return +(Math.random() * (max - min) + min).toFixed(2);
-  };
+  const generatePrice = (min, max) => +(Math.random() * (max - min) + min).toFixed(2);
 
   const getPriceRange = (id) => {
     switch (id.toLowerCase()) {
-      case "bitcoin":
-        return [115000, 118000];
-      case "ethereum":
-        return [3700, 4100];
-      default:
-        return [1000, 2000];
+      case "bitcoin": return [115000, 118000];
+      case "ethereum": return [3700, 4100];
+      default: return [1000, 2000];
     }
   };
 
   const getCoinInfo = (coinId) => {
     const info = {
-      bitcoin: {
-        marketCap: "$1.2T",
-        volume24h: "$30B",
-        totalSupply: "19.5M",
-      },
-      ethereum: {
-        marketCap: "$450B",
-        volume24h: "$15B",
-        totalSupply: "120M",
-      },
-      default: {
-        marketCap: "N/A",
-        volume24h: "N/A",
-        totalSupply: "N/A",
-      },
+      bitcoin: { marketCap: "$1.2T", volume24h: "$30B", totalSupply: "19.5M" },
+      ethereum: { marketCap: "$450B", volume24h: "$15B", totalSupply: "120M" },
+      default: { marketCap: "N/A", volume24h: "N/A", totalSupply: "N/A" },
     };
     return info[coinId.toLowerCase()] || info.default;
   };
 
   const getCoinLogo = (coinId) => {
     switch (coinId.toLowerCase()) {
-      case "bitcoin":
-        return bitcoinLogo;
-      case "ethereum":
-        return ethereumLogo;
-      default:
-        return null;
+      case "bitcoin": return bitcoinLogo;
+      case "ethereum": return ethereumLogo;
+      default: return null;
     }
   };
 
   const [min, max] = getPriceRange(id);
   const [currentValue, setCurrentValue] = useState(generatePrice(min, max));
-  const [dayData, setDayData] = useState([]);
-  const [monthData, setMonthData] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [chartLabels, setChartLabels] = useState([]);
+
+  // Генерация данных под разные интервалы
+  const generateChartData = (range) => {
+    const [min, max] = getPriceRange(id);
+
+    if (range === "15m") {
+      // 15 минут по 1 минуте
+      return {
+        labels: Array.from({ length: 15 }, (_, i) => `${i + 1}m`),
+        data: Array.from({ length: 15 }, () => generatePrice(min, max)),
+      };
+    }
+    if (range === "1d") {
+      // 24 часа
+      return {
+        labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+        data: Array.from({ length: 24 }, () => generatePrice(min, max)),
+      };
+    }
+    if (range === "1w") {
+      // 7 дней
+      return {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        data: Array.from({ length: 7 }, () => generatePrice(min, max)),
+      };
+    }
+    if (range === "1m") {
+      // 30 дней
+      return {
+        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
+        data: Array.from({ length: 30 }, () => generatePrice(min, max)),
+      };
+    }
+    return { labels: [], data: [] };
+  };
 
   useEffect(() => {
     const [min, max] = getPriceRange(id);
     setCurrentValue(generatePrice(min, max));
-    setDayData(Array.from({ length: 24 }, () => generatePrice(min, max)));
-    setMonthData(Array.from({ length: 30 }, () => generatePrice(min, max)));
-  }, [id]);
+
+    const { labels, data } = generateChartData(timeRange);
+    setChartLabels(labels);
+    setChartData(data);
+  }, [id, timeRange]);
 
   const changePercent = +(Math.random() * 10 - 5).toFixed(2);
-  const getChangeColor = () => {
-    if (changePercent > 0) return "limegreen";
-    if (changePercent < 0) return "red";
-    return "gold";
-  };
+  const getChangeColor = () => (changePercent > 0 ? "limegreen" : changePercent < 0 ? "red" : "gold");
 
   const coinInfo = getCoinInfo(id);
   const coinLogo = getCoinLogo(id);
 
-  const dayLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-  const monthLabels = Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
-
   return (
     <div style={{ backgroundColor: "#222", minHeight: "100vh", width: "900px", padding: "40px 0", color: "white" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 20px" }}>
-        {/* 🆕 Обновленный заголовок с условным рендерингом логотипа */}
         <h2 style={{
           marginBottom: "30px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center", // 🆕 Выравнивание по центру
+          justifyContent: "center",
           gap: "10px"
         }}>
           {id.toUpperCase()}
@@ -128,12 +137,8 @@ function Coin() {
         )}
 
         <div style={{ display: "flex", gap: "40px", marginBottom: "40px", alignItems: "center" }}>
-          <div>
-            <strong>Name:</strong> {id.toUpperCase()}
-          </div>
-          <div>
-            <strong>Current Value:</strong> ${currentValue.toLocaleString()}
-          </div>
+          <div><strong>Name:</strong> {id.toUpperCase()}</div>
+          <div><strong>Current Value:</strong> ${currentValue.toLocaleString()}</div>
           <div>
             <strong>Change:</strong>{" "}
             <span style={{ color: getChangeColor() }}>
@@ -143,23 +148,47 @@ function Coin() {
           </div>
         </div>
 
-        <div style={{ marginBottom: "50px" }}>
-          <h3 style={{ marginBottom: "15px" }}>📅 Monthly Chart (30 Days)</h3>
-          <LineChart
-            labels={monthLabels}
-            data={monthData}
-            title={`${id} - Monthly Price`}
-          />
-        </div>
+        <div style={{ 
+  marginBottom: "20px", 
+  textAlign: "center", 
+  backgroundColor: "#111", 
+  padding: "8px", 
+  borderRadius: "6px",
+  display: "inline-block"
+}}>
+  {["15m", "1d", "1w", "1m"].map((range) => (
+    <button
+      key={range}
+      onClick={() => setTimeRange(range)}
+      style={{
+        padding: "8px 16px",
+        margin: "0 2px",
+        backgroundColor: timeRange === range ? "#f0b90b" : "#111",
+        color: timeRange === range ? "#000" : "#aaa",
+        fontWeight: "bold",
+        border: "1px solid #333",
+        borderRadius: "4px",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (timeRange !== range) e.target.style.color = "#f0b90b";
+      }}
+      onMouseLeave={(e) => {
+        if (timeRange !== range) e.target.style.color = "#aaa";
+      }}
+    >
+      {range.toUpperCase()}
+    </button>
+  ))}
+</div>
 
-        <div>
-          <h3 style={{ marginBottom: "15px" }}>🕐 Daily Chart (24 Hours)</h3>
-          <LineChart
-            labels={dayLabels}
-            data={dayData}
-            title={`${id} - Daily Price`}
-          />
-        </div>
+        {/* Один график */}
+        <LineChart
+          labels={chartLabels}
+          data={chartData}
+          title={`${id} - ${timeRange.toUpperCase()} Price`}
+        />
       </div>
     </div>
   );

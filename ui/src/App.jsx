@@ -5,7 +5,6 @@ import CryptoTable from "./components/CryptoTable.jsx";
 import "./App.scss";
 
 const App = memo(function App() {
-  // Memoize the navigation links to prevent re-renders
   const navigationLinks = useMemo(() => [
     { to: "/", label: "Home" },
     { to: "/coin/bitcoin", label: "Bitcoin" },
