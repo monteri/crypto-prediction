@@ -20,6 +20,3 @@ topics:
   - name: crypto_price_changes
     partitions: 3
     replication: 1
-  - name: crypto_alert_dedup_store
-    partitions: 3
-    replication: 1

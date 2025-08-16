@@ -104,9 +104,10 @@ def terminate_queries_touching(names_upper):
 def create_price_changes_table():
     statement = """
     CREATE TABLE IF NOT EXISTS crypto_price_changes
-    WITH (KAFKA_TOPIC='crypto_price_changes', PARTITIONS=3, REPLICAS=1) AS
+    WITH (KAFKA_TOPIC='crypto_price_changes', PARTITIONS=3, REPLICAS=1, KEY_FORMAT='KAFKA', VALUE_FORMAT='JSON') AS
     SELECT 
-        symbol,
+        symbol AS smb,
+        AS_VALUE(symbol) AS symbol,
         WINDOWSTART AS window_start,
         WINDOWEND   AS window_end,
         EARLIEST_BY_OFFSET(price_numeric) AS start_price,
@@ -119,9 +120,9 @@ def create_price_changes_table():
         COUNT(*) AS data_points,
         LATEST_BY_OFFSET(event_time) AS latest_timestamp
     FROM crypto_enriched 
-    WINDOW HOPPING (SIZE 10 MINUTES, ADVANCE BY 60 SECONDS)
+    WINDOW TUMBLING (SIZE 1 MINUTES)
     GROUP BY symbol
-    EMIT CHANGES;
+    EMIT FINAL;
     """
     return exec_with_retry(statement)
 
@@ -172,69 +173,27 @@ def create_significant_alerts_stream():
     return exec_with_retry(statement)
 
 
-def create_alert_dedup_table():
-    statement = """
-    CREATE TABLE IF NOT EXISTS crypto_alert_dedup_store
-    WITH (KAFKA_TOPIC='crypto_alert_dedup_store', PARTITIONS=3, REPLICAS=1) AS
-    SELECT 
-      symbol,
-      LATEST_BY_OFFSET(alert_time) AS last_alert_time,
-      LATEST_BY_OFFSET(alert_type) AS last_alert_type,
-      COUNT(*) AS alert_count
-    FROM crypto_significant_alerts
-    GROUP BY symbol
-    EMIT CHANGES;
-    """
-    return exec_with_retry(statement)
 
-
-def create_deduplicated_alerts_stream():
-    statement = """
-    CREATE STREAM IF NOT EXISTS crypto_alerts
-    WITH (KAFKA_TOPIC='crypto_alerts', PARTITIONS=3, REPLICAS=1) AS
-    SELECT 
-      a.symbol,
-      a.window_start,
-      a.window_end,
-      a.start_price,
-      a.end_price,
-      a.price_change_percent,
-      a.alert_type,
-      a.alert_time,
-      a.data_points,
-      'DEDUPLICATED' AS processing_status
-    FROM crypto_significant_alerts a
-    LEFT JOIN crypto_alert_dedup_store d
-      ON a.symbol = d.symbol
-    WHERE d.last_alert_time IS NULL
-       OR (a.alert_time - d.last_alert_time) > 120000
-    EMIT CHANGES;
-    """
-    return exec_with_retry(statement)
 
 
 def drop_existing_alert_streams():
     """
-    Dependency-safe teardown:
-      1) crypto_alerts (sink)
-      2) crypto_alert_dedup_store (reads from significant_alerts)
-      3) crypto_significant_alerts (reads from price_changes_s)
-      4) crypto_price_changes_s (source over table topic)  [NO DELETE TOPIC]
+    Dependency-safe teardown for simplified alert system:
+      1) crypto_significant_alerts (reads from price_changes_s)
+      2) crypto_price_changes_s (source over stream topic)  [NO DELETE TOPIC]
+      3) crypto_price_changes (main stream)  [DELETE TOPIC]
     """
     objs_upper = {
-        "CRYPTO_ALERTS",
-        "CRYPTO_ALERT_DEDUP_STORE",
         "CRYPTO_SIGNIFICANT_ALERTS",
         "CRYPTO_PRICE_CHANGES_S",
+        "CRYPTO_PRICE_CHANGES",
     }
     terminate_queries_touching(objs_upper)
 
-    # Drop in correct order
     cmds = [
-        ("STREAM", "crypto_alerts", True),
-        ("TABLE",  "crypto_alert_dedup_store", True),
         ("STREAM", "crypto_significant_alerts", True),
-        ("STREAM", "crypto_price_changes_s", False),  # do NOT delete topic
+        ("STREAM", "crypto_price_changes_s", False),   # do NOT delete topic
+        ("TABLE", "crypto_price_changes", True),       # DELETE TOPIC to recreate
     ]
     for kind, name, delete_topic in cmds:
         if kind == "STREAM":
@@ -256,14 +215,12 @@ def main():
     drop_existing_alert_streams()
 
     # Give the command runner a moment to settle
-    time.sleep(6)
+    time.sleep(3)
 
     success = True
     success &= create_price_changes_table() is not None
     success &= create_price_changes_source_stream() is not None
     success &= create_significant_alerts_stream() is not None
-    success &= create_alert_dedup_table() is not None
-    success &= create_deduplicated_alerts_stream() is not None
 
     if success:
         print("✅ All alert streams created successfully!")
@@ -272,7 +229,3 @@ def main():
         return False
 
     return True
-
-
-if __name__ == "__main__":
-    main()
