@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ActionableNotification } from "@carbon/react";
 import LineChart from "./components/LineChart";
+import { cryptoAnalyticsApi } from "./api";
 
 import bitcoinLogo from "./assets/logo-BTC.png";
 import ethereumLogo from "./assets/logo-ETH.svg";
@@ -11,6 +12,9 @@ function Coin() {
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [timeRange, setTimeRange] = useState("1d");
   const [showAlert, setShowAlert] = useState(false);
+  const [symbolData, setSymbolData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const generatePrice = (min, max) =>
     +(Math.random() * (max - min) + min).toFixed(2);
@@ -95,6 +99,29 @@ function Coin() {
   const getChangeColor = () =>
     changePercent > 0 ? "limegreen" : changePercent < 0 ? "red" : "gold";
 
+  // Fetch symbol data from API
+  useEffect(() => {
+    const fetchSymbolData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await cryptoAnalyticsApi.getSymbolSummary(id);
+        setSymbolData(data);
+        
+        // Update current value and change percent from API data
+        setCurrentValue(data.current_price);
+        setChangePercent(data.daily_change_percent);
+      } catch (err) {
+        console.error('Error fetching symbol data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSymbolData();
+  }, [id]);
+
   useEffect(() => {
     const [min, max] = getPriceRange(id);
     setCurrentValue(generatePrice(min, max));
@@ -115,6 +142,44 @@ function Coin() {
 
   const coinInfo = getCoinInfo(id);
   const coinLogo = getCoinLogo(id);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#222",
+          minHeight: "100vh",
+          width: "900px",
+          padding: "40px 0",
+          color: "white",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <div>Loading {id.toUpperCase()} data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#222",
+          minHeight: "100vh",
+          width: "900px",
+          padding: "40px 0",
+          color: "#b51633",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <div>Error loading {id.toUpperCase()}: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -188,6 +253,25 @@ function Coin() {
             <p>
               <strong>General offer:</strong> {coinInfo.totalSupply}
             </p>
+            {symbolData && (
+              <>
+                <p>
+                  <strong>Daily Average:</strong> ${symbolData.daily_avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  <strong>Daily Min:</strong> ${symbolData.daily_min.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  <strong>Daily Max:</strong> ${symbolData.daily_max.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  <strong>Opening Price:</strong> ${symbolData.opening_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  <strong>Number of Updates:</strong> {symbolData.num_updates}
+                </p>
+              </>
+            )}
           </div>
         )}
 
@@ -204,7 +288,7 @@ function Coin() {
             <strong>Name:</strong> {id.toUpperCase()}
           </div>
           <div>
-            <strong>Current Value:</strong> ${currentValue.toLocaleString()}
+            <strong>Current Value:</strong> ${currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div>
             <strong>Change:</strong>{" "}
