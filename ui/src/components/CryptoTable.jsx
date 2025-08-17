@@ -12,10 +12,12 @@ import { View } from '@carbon/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { cryptoAnalyticsApi } from '../api';
+import { useAlert } from '../contexts/AlertContext.jsx';
 import './CryptoTable.scss';
 
 function CryptoTable() {
   const navigate = useNavigate();
+  const { success, error: showError } = useAlert();
   const [symbols, setSymbols] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,16 +28,18 @@ function CryptoTable() {
         setLoading(true);
         const data = await cryptoAnalyticsApi.getAllSymbolsSummary();
         setSymbols(data.symbols || []);
+        success(`Successfully loaded ${data.symbols?.length || 0} crypto symbols`);
       } catch (err) {
         console.error('Error fetching symbols:', err);
         setError(err.message);
+        showError('Failed to load crypto data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchSymbols();
-  }, []);
+  }, [success, showError]);
 
   const headers = [
     { key: 'symbol', header: 'Symbol' },

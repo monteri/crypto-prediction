@@ -3,12 +3,14 @@ import { useParams } from "react-router-dom";
 import { ActionableNotification } from "@carbon/react";
 import LineChart from "./components/LineChart";
 import { cryptoAnalyticsApi } from "./api";
+import { useAlert } from "./contexts/AlertContext.jsx";
 
 import bitcoinLogo from "./assets/logo-BTC.png";
 import ethereumLogo from "./assets/logo-ETH.svg";
 
 function Coin() {
   const { id } = useParams();
+  const { success, error: showError } = useAlert();
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [timeRange, setTimeRange] = useState("1d");
   const [showAlert, setShowAlert] = useState(false);
@@ -111,16 +113,19 @@ function Coin() {
         // Update current value and change percent from API data
         setCurrentValue(data.current_price);
         setChangePercent(data.daily_change_percent);
+        
+        success(`Successfully loaded ${id.toUpperCase()} data`);
       } catch (err) {
         console.error('Error fetching symbol data:', err);
         setError(err.message);
+        showError(`Failed to load ${id.toUpperCase()} data. Please try again.`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSymbolData();
-  }, [id]);
+  }, [id, success, showError]);
 
   useEffect(() => {
     const [min, max] = getPriceRange(id);

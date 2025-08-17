@@ -2,6 +2,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import App from "./App.jsx";
+import { AlertProvider } from "./contexts/AlertContext.jsx";
 
 import "./index.scss";
 
@@ -25,12 +26,14 @@ const LoadingSpinner = () => (
 );
 
 ReactDOM.createRoot(root).render(
-  <BrowserRouter>
-    <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/coin/:id" element={<Coin />} />
-      </Routes>
-    </Suspense>
-  </BrowserRouter>
+  <AlertProvider>
+    <BrowserRouter>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/coin/:id" element={<Coin />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  </AlertProvider>
 );
