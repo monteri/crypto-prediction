@@ -104,7 +104,6 @@ def create_daily_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_daily_stats AS
     SELECT 
         symbol,
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd') AS date_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
@@ -132,7 +131,6 @@ def create_monthly_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_monthly_stats AS
     SELECT 
         symbol,
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM') AS month_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
@@ -160,7 +158,6 @@ def create_hourly_aggregates_table():
     CREATE TABLE IF NOT EXISTS crypto_hourly_stats AS
     SELECT 
         symbol,
-        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART/1000), 'yyyy-MM-dd HH:00') AS hour_str,
         WINDOWSTART AS window_start,
         WINDOWEND AS window_end,
         COUNT(*) AS num_updates,
