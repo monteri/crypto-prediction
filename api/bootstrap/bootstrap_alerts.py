@@ -104,14 +104,14 @@ def terminate_queries_touching(names_upper):
 def create_price_changes_table():
     statement = """
     CREATE TABLE IF NOT EXISTS crypto_price_changes
-    WITH (KAFKA_TOPIC='crypto_price_changes', PARTITIONS=3, REPLICAS=1, KEY_FORMAT='KAFKA', VALUE_FORMAT='JSON') AS
+    WITH (KAFKA_TOPIC='crypto_price_changes', PARTITIONS=3, REPLICAS=1, KEY_FORMAT='JSON', VALUE_FORMAT='JSON') AS
     SELECT 
         symbol AS smb,
         AS_VALUE(symbol) AS symbol,
         WINDOWSTART AS window_start,
-        WINDOWEND   AS window_end,
+        WINDOWEND AS window_end,
         EARLIEST_BY_OFFSET(price_numeric) AS start_price,
-        LATEST_BY_OFFSET(price_numeric)   AS end_price,
+        LATEST_BY_OFFSET(price_numeric) AS end_price,
         CASE 
           WHEN EARLIEST_BY_OFFSET(price_numeric) = 0 THEN NULL
           ELSE (LATEST_BY_OFFSET(price_numeric) - EARLIEST_BY_OFFSET(price_numeric))
@@ -153,7 +153,8 @@ def create_significant_alerts_stream():
     CREATE STREAM IF NOT EXISTS crypto_significant_alerts
     WITH (KAFKA_TOPIC='crypto_significant_alerts', PARTITIONS=3, REPLICAS=1) AS
     SELECT 
-      symbol,
+      symbol AS smb,
+      AS_VALUE(symbol) AS symbol,
       window_start,
       window_end,
       start_price,
@@ -168,13 +169,10 @@ def create_significant_alerts_stream():
       ROWTIME AS alert_time
     FROM crypto_price_changes_s
     WHERE ABS(price_change_percent) >= 5.0
+    PARTITION BY symbol
     EMIT CHANGES;
     """
     return exec_with_retry(statement)
-
-
-
-
 
 def drop_existing_alert_streams():
     """

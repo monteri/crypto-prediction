@@ -14,9 +14,6 @@ topics:
   - name: crypto_hourly_stats
     partitions: 3
     replication: 1
-  - name: crypto_alerts
-    partitions: 3
-    replication: 1
   - name: crypto_price_changes
     partitions: 3
     replication: 1

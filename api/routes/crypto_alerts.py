@@ -14,45 +14,38 @@ BOOTSTRAP = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
 ALERT_TOPIC = os.getenv('KAFKA_ALERT_TOPIC', 'crypto_alerts')
 
 
-def consume_new_alerts(limit: int = 10, timeout_ms: int = 1500) -> List[Dict]:
+def consume_new_alerts(limit: int = 10, timeout_ms: int = 5000) -> List[Dict]:
     """
-    Consume only new alerts using consumer group offsets to avoid duplicates
+    Read once: poll up to `limit` new messages (from the committed offsets),
+    commit what was consumed, and return them.
     """
     consumer = KafkaConsumer(
         ALERT_TOPIC,
         bootstrap_servers=BOOTSTRAP.split(','),
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-        enable_auto_commit=False,              # we'll commit explicitly
-        auto_offset_reset='earliest',
+        enable_auto_commit=False,
         group_id='alerts-api-consumer-persistent',
+        auto_offset_reset='earliest',
         consumer_timeout_ms=timeout_ms,
-        max_poll_records=limit                 # cap per poll
     )
-    
-    alerts = []
+
     try:
-        end = time.time() + (timeout_ms / 1000.0)
-        while len(alerts) < limit and time.time() < end:
-            records = consumer.poll(timeout_ms=timeout_ms)
-            for _tp, msgs in records.items():
-                for msg in msgs:
-                    v = msg.value
-                    if v:
-                        v['consumed_at'] = int(time.time() * 1000)
-                        alerts.append(v)
-                        if len(alerts) >= limit:
-                            break
-                if len(alerts) >= limit:
-                    break
-        
-        # commit what we actually consumed
+        polled = consumer.poll(timeout_ms=timeout_ms, max_records=limit)
+
+        alerts: List[Dict] = []
+        for _tp, msgs in polled.items():
+            for msg in msgs:
+                v = msg.value
+                if v is not None:
+                    v['consumed_at'] = int(time.time() * 1000)
+                    alerts.append(v)
+
         if alerts:
             consumer.commit()
-        
-        # Sort by alert time (most recent first)
+
         alerts.sort(key=lambda x: x.get('alert_time', 0), reverse=True)
         return alerts[:limit]
-        
+
     except Exception as e:
         print(f"Error consuming alerts: {e}")
         return []
@@ -61,13 +54,13 @@ def consume_new_alerts(limit: int = 10, timeout_ms: int = 1500) -> List[Dict]:
 
 
 @router.get("/alerts")
-async def get_alerts(limit: int = Query(50, ge=1, le=200)) -> Dict:
+async def get_alerts(limit: int = Query(2, ge=1, le=200)) -> Dict:
     """Get latest crypto price alerts with sub-1-second performance for frontend"""
     try:
         start_time = time.time()
         
         # Direct Kafka query - only new alerts, no duplicates
-        alerts = consume_new_alerts(limit=limit, timeout_ms=300)
+        alerts = consume_new_alerts(limit=limit, timeout_ms=5000)
         
         processing_time = (time.time() - start_time) * 1000
         
