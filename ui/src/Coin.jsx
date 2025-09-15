@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { ActionableNotification } from "@carbon/react";
 import LineChart from "./components/LineChart";
@@ -10,13 +10,14 @@ import ethereumLogo from "./assets/logo-ETH.svg";
 
 function Coin() {
   const { id } = useParams();
-  const { success, error: showError } = useAlert();
+  const { success, error: showError, show } = useAlert();
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [timeRange, setTimeRange] = useState("1d");
   const [showAlert, setShowAlert] = useState(false);
   const [symbolData, setSymbolData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const lastPriceRef = useRef(null);
 
   const generatePrice = (min, max) =>
     +(Math.random() * (max - min) + min).toFixed(2);
@@ -136,6 +137,58 @@ function Coin() {
     setChartLabels(labels);
     setChartData(data);
   }, [id, timeRange]);
+
+  // 30s periodic alert about percent change since last check
+  useEffect(() => {
+    let isCancelled = false;
+
+    const checkAndAlert = async () => {
+      try {
+        const data = await cryptoAnalyticsApi.getSymbolSummary(id);
+        if (isCancelled) return;
+
+        const newPrice = data.current_price;
+        const previousPrice = lastPriceRef.current;
+        lastPriceRef.current = newPrice;
+
+        if (previousPrice != null && previousPrice > 0) {
+          const deltaPercent = ((newPrice - previousPrice) / previousPrice) * 100;
+          const rounded = +deltaPercent.toFixed(2);
+          setCurrentValue(newPrice);
+          setChangePercent(rounded);
+
+          show({
+            title: 'Price change (30s)',
+            message: `${id.toUpperCase()}: ${rounded > 0 ? '+' : ''}${rounded}% (${previousPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} → ${newPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`,
+            kind: rounded > 0 ? 'success' : rounded < 0 ? 'error' : 'info',
+            timeout: 8000,
+            position: 'bottom-right'
+          });
+        }
+      } catch (e) {
+        // Silent network errors to avoid alert spam
+        // Optionally log to console
+        // console.debug('Price polling failed', e);
+      }
+    };
+
+    // Initial seed without alert to set previous price
+    (async () => {
+      try {
+        const data = await cryptoAnalyticsApi.getSymbolSummary(id);
+        if (!isCancelled) {
+          lastPriceRef.current = data.current_price;
+          setCurrentValue(data.current_price);
+        }
+      } catch (_) {}
+    })();
+
+    const intervalId = setInterval(checkAndAlert, 30000);
+    return () => {
+      isCancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [id, show]);
 
   useEffect(() => {
     if (Math.abs(changePercent) >= 4) {

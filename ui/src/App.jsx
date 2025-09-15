@@ -8,6 +8,8 @@ import "./App.scss";
 const App = memo(function App() {
   const [symbols, setSymbols] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [usdUah, setUsdUah] = useState(null);
+  const [fxError, setFxError] = useState(null);
 
   useEffect(() => {
     const fetchSymbols = async () => {
@@ -27,6 +29,30 @@ const App = memo(function App() {
     fetchSymbols();
   }, []);
 
+  // Fetch USD -> UAH from open.exchangerate-api.com
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchUsdUah = async () => {
+      try {
+        setFxError(null);
+        const res = await fetch('https://open.exchangerate-api.com/v6/latest');
+        if (!res.ok) throw new Error(`FX HTTP ${res.status}`);
+        const json = await res.json();
+        const rate = json?.rates?.UAH;
+        if (typeof rate === 'number' && !cancelled) {
+          setUsdUah(rate);
+        }
+      } catch (e) {
+        if (!cancelled) setFxError(e.message || 'FX fetch failed');
+      }
+    };
+
+    fetchUsdUah();
+  }, []);
+
+  // Removed BTC/ETH fetch; using $ → USDT static badge
+
   const navigationLinks = useMemo(() => {
     const links = [{ to: "/", label: "Home" }];
     
@@ -43,7 +69,20 @@ const App = memo(function App() {
 
   return (
     <div className="app-container">
-      <h2 style={{ color: "white" }}>Crypto Prediction</h2>
+      <div className="app-header">
+        <div></div>
+        <h2 className="app-title">Crypto Prediction</h2>
+        <div className="header-right" style={{ justifySelf: 'end', alignSelf: 'start' }}>
+          <span className="fx-badge">
+            <span className="fx-badge__label">USD → UAH</span>
+            <strong>{usdUah ? usdUah.toFixed(2) : fxError ? '—' : '...'}</strong>
+          </span>
+          <span className="coin-badge coin-badge--usdt">
+            <span className="coin-badge__label">USD → USDT</span>
+            <strong>1.00</strong>
+          </span>
+        </div>
+      </div>
       <nav>
         {navigationLinks.map((link, index) => (
           <span key={link.to}>
