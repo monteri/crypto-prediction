@@ -1,28 +1,24 @@
 import { Link } from "react-router-dom";
 import { memo, useMemo, useState, useEffect } from "react";
-import CryptoTable from "./components/CryptoTable.jsx";
-import { cryptoAnalyticsApi } from "./api";
+import CryptoTable from "../components/CryptoTable.jsx";
+import { cryptoAnalyticsApi } from "../api";
 
-import "./App.scss";
+import "../App.scss";
 
-const App = memo(function App() {
+const Dashboard = memo(function Dashboard() {
   const [symbols, setSymbols] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [usdUah, setUsdUah] = useState(null);
   const [fxError, setFxError] = useState(null);
 
   useEffect(() => {
     const fetchSymbols = async () => {
       try {
-        setLoading(true);
         const data = await cryptoAnalyticsApi.getAllSymbolsSummary();
         setSymbols(data.symbols || []);
       } catch (err) {
         console.error('Error fetching symbols:', err);
         // Fallback to default symbols if API fails
         setSymbols([]);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -96,4 +92,4 @@ const App = memo(function App() {
   );
 });
 
-export default App;
+export default Dashboard;

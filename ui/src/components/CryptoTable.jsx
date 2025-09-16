@@ -12,12 +12,10 @@ import { View } from '@carbon/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { cryptoAnalyticsApi } from '../api';
-import { useAlert } from '../contexts/AlertContext.jsx';
 import './CryptoTable.scss';
 
 function CryptoTable() {
   const navigate = useNavigate();
-  const { success, error: showError } = useAlert();
   const [symbols, setSymbols] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,32 +26,30 @@ function CryptoTable() {
         setLoading(true);
         const data = await cryptoAnalyticsApi.getAllSymbolsSummary();
         setSymbols(data.symbols || []);
-        success(`Successfully loaded ${data.symbols?.length || 0} crypto symbols`);
       } catch (err) {
         console.error('Error fetching symbols:', err);
         setError(err.message);
-        showError('Failed to load crypto data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchSymbols();
-  }, [success, showError]);
+  }, []);
 
   const headers = [
     { key: 'symbol', header: 'Symbol' },
-    { key: 'current_price', header: 'Current Price' },
-    { key: 'daily_change_percent', header: 'Daily Change' },
-    { key: 'daily_avg', header: 'Daily Avg' },
+    { key: 'currentPrice', header: 'Current Price' },
+    { key: 'dailyChangePercent', header: 'Daily Change' },
+    { key: 'dailyAvg', header: 'Daily Avg' },
   ];
 
   const rows = symbols.map((symbol) => ({
     id: symbol.symbol.toLowerCase().replace('usdt', ''),
     symbol: symbol.symbol.replace('USDT', ''),
-    current_price: `$${symbol.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    daily_change_percent: `${symbol.daily_change_percent > 0 ? '+' : ''}${symbol.daily_change_percent.toFixed(2)}%`,
-    daily_avg: `$${symbol.daily_avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    currentPrice: `$${symbol.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    dailyChangePercent: `${symbol.dailyChangePercent > 0 ? '+' : ''}${symbol.dailyChangePercent.toFixed(2)}%`,
+    dailyAvg: `$${symbol.dailyAvg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   }));
 
   const handleView = (id) => {
@@ -116,7 +112,7 @@ function CryptoTable() {
                   <TableCell
                     key={cell.id}
                     style={
-                      cell.info.header === 'daily_change_percent'
+                      cell.info.header === 'dailyChangePercent'
                         ? getChangeColorStyle(cell.value)
                         : undefined
                     }

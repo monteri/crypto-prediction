@@ -14,6 +14,10 @@ export const useAlert = () => {
 export const AlertProvider = ({ children }) => {
   const [alerts, setAlerts] = useState([]);
 
+  const remove = useCallback((id) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== id));
+  }, []);
+
   const show = useCallback(({ 
     title = 'Notification', 
     message, 
@@ -41,11 +45,7 @@ export const AlertProvider = ({ children }) => {
     }
 
     return id;
-  }, []);
-
-  const remove = useCallback((id) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== id));
-  }, []);
+  }, [remove]);
 
   const success = useCallback((message, title = 'Success') => {
     return show({ title, message, kind: 'success' });
